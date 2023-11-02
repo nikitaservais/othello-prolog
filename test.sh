@@ -1,0 +1,1 @@
+swipl -s game.pl -g play -t halt
