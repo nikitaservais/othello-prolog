@@ -75,8 +75,17 @@ update_counts(Piece, BlackAcc, WhiteAcc, NewBlackAcc, WhiteAcc) :-
 update_counts(Piece, BlackAcc, WhiteAcc, BlackAcc, NewWhiteAcc) :-
     is_white(Piece), NewWhiteAcc is WhiteAcc + 1.
 
+and_the_winner_is(Board, Winner) :-
+    count_pieces(Board, BlackCount, WhiteCount),
+    (
+        BlackCount > WhiteCount, Winner = 'black';
+        BlackCount < WhiteCount, Winner = 'white';
+        BlackCount = WhiteCount, Winner = 'draw'
+    ).
+
 play :-
     welcome,
     initial_board(Board),
-    empty_board(Board),
-    display_board(Board).
+    display_board(Board),
+    is_black(Black),
+    play(Black, Board).
