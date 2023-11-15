@@ -43,13 +43,29 @@ empty_square(X, Y, Board) :-
     is_empty(Piece).
 
 empty_board(Board) :-
-    initial_board(Board).
+    Board = [[_, _, _, _, _, _, _, _],
+             [_, _, _, _, _, _, _, _],
+             [_, _, _, _, _, _, _, _],
+             [_, _, _, _, _, _, _, _],
+             [_, _, _, _, _, _, _, _],
+             [_, _, _, _, _, _, _, _],
+             [_, _, _, _, _, _, _, _],
+             [_, _, _, _, _, _, _, _]].
+
 
 initial_board(Board) :-
-   EmptyRow       = ['.', '.', '.', '.', '.', '.', '.', '.'],
-   UpperMiddleRow = ['.', '.', '.', 'o', 'x', '.', '.', '.'],
-   LowerMiddleRow = ['.', '.', '.', 'x', 'o', '.', '.', '.'],
-   Board = [EmptyRow, EmptyRow, EmptyRow, UpperMiddleRow, LowerMiddleRow, EmptyRow, EmptyRow, EmptyRow].
+   Board = [[E, E, E, E, E, E, E, E],
+            [E, E, E, E, E, E, E, E],
+            [E, E, E, E, E, E, E, E],
+            [E, E, E, W, B, E, E, E],
+            [E, E, E, B, W, E, E, E],
+            [E, E, E, E, E, E, E, E],
+            [E, E, E, E, E, E, E, E],
+            [E, E, E, E, E, E, E, E]],
+   is_empty(E),
+   is_black(B),
+   is_white(W).
+
 
 % Main predicate
 count_pieces(Board, BlackCount, WhiteCount) :-
@@ -82,6 +98,53 @@ and_the_winner_is(Board, Winner) :-
         BlackCount < WhiteCount, Winner = 'white';
         BlackCount = WhiteCount, Winner = 'draw'
     ).
+
+enclosing_piece(X, Y, Player, Board, U, V, N) :-
+    % Check each direction individually
+    (   check_direction(X, Y, Player, Board, U, V, N, 1, 0)  % Horizontal right
+    ;   check_direction(X, Y, Player, Board, U, V, N, -1, 0) % Horizontal left
+    ;   check_direction(X, Y, Player, Board, U, V, N, 0, 1)  % Vertical down
+    ;   check_direction(X, Y, Player, Board, U, V, N, 0, -1) % Vertical up
+    ;   check_direction(X, Y, Player, Board, U, V, N, 1, 1)  % Diagonal down-right
+    ;   check_direction(X, Y, Player, Board, U, V, N, 1, -1) % Diagonal up-right
+    ;   check_direction(X, Y, Player, Board, U, V, N, -1, 1) % Diagonal down-left
+    ;   check_direction(X, Y, Player, Board, U, V, N, -1, -1)% Diagonal up-left
+    ).
+
+% check_direction(X, Y, Player, Board, U, V, N, DX, DY)
+check_direction(X, Y, Player, Board, U, V, N, DX, DY) :-
+    next_square(X, Y, DX, DY, NextX, NextY),
+    valid_square(NextX, NextY),
+    square(NextX, NextY, Board, squ(NextX, NextY, NextPiece)),
+    other_player(Player, NextPiece), % Check if next piece is of the other player
+    count_enclosed_pieces(NextX, NextY, Player, Board, U, V, 1, N, DX, DY).
+
+% next_square(X, Y, DX, DY, NextX, NextY) - Calculate next square coordinates
+next_square(X, Y, DX, DY, NextX, NextY) :-
+    NextX is X + DX,
+    NextY is Y + DY.
+
+% valid_square(X, Y) - Check if square is within the board
+valid_square(X, Y) :-
+    between(1, 8, X),
+    between(1, 8, Y).
+
+% count_enclosed_pieces(X, Y, Player, Board, U, V, Count, N, DX, DY)
+% Continue in the direction (DX, DY) counting enclosed pieces
+count_enclosed_pieces(X, Y, Player, Board, U, V, Count, N, DX, DY) :-
+    next_square(X, Y, DX, DY, NextX, NextY),
+    valid_square(NextX, NextY),
+    square(NextX, NextY, Board, squ(NextX, NextY, NextPiece)),
+    is_piece(NextPiece),
+    (   other_player(Player, NextPiece)
+    ->  NewCount is Count + 1,
+        count_enclosed_pieces(NextX, NextY, Player, Board, U, V, NewCount, N, DX, DY)
+    ; U = NextX, V = NextY, N = Count
+    ).
+
+is_same_player(Player, Piece) :-
+    is_black(Player), is_black(Piece);
+    is_white(Player), is_white(Piece).
 
 play :-
     welcome,
