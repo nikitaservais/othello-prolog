@@ -35,33 +35,35 @@ column(N, Board, col(N, A, B, C, D, E, F, G, H)) :-
 
 square(X, Y, Board, squ(X, Y, Piece)) :-
     between(1, 8, X), between(1, 8, Y),
-    row(X, Board, row(X, A, B, C, D, E, F, G, H)),
-    nth1(Y, [A, B, C, D, E, F, G, H], Piece).
+    row(Y, Board, row(Y, A, B, C, D, E, F, G, H)),
+    nth1(X, [A, B, C, D, E, F, G, H], Piece).
 
 empty_square(X, Y, Board) :-
-    square(X, Y, Board, Piece),
+    square(X, Y, Board, squ(X, Y, Piece)),
     is_empty(Piece).
 
 empty_board(Board) :-
-    Board = [[_, _, _, _, _, _, _, _],
-             [_, _, _, _, _, _, _, _],
-             [_, _, _, _, _, _, _, _],
-             [_, _, _, _, _, _, _, _],
-             [_, _, _, _, _, _, _, _],
-             [_, _, _, _, _, _, _, _],
-             [_, _, _, _, _, _, _, _],
-             [_, _, _, _, _, _, _, _]].
+    Board = [
+    [_, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _]].
 
 
 initial_board(Board) :-
-   Board = [[E, E, E, E, E, E, E, E],
-            [E, E, E, E, E, E, E, E],
-            [E, E, E, E, E, E, E, E],
-            [E, E, E, W, B, E, E, E],
-            [E, E, E, B, W, E, E, E],
-            [E, E, E, E, E, E, E, E],
-            [E, E, E, E, E, E, E, E],
-            [E, E, E, E, E, E, E, E]],
+   Board = [
+   [E, E, E, E, E, E, E, E],
+   [E, E, E, E, E, E, E, E],
+   [E, E, E, E, E, E, E, E],
+   [E, E, E, W, B, E, E, E],
+   [E, E, E, B, W, E, E, E],
+   [E, E, E, E, E, E, E, E],
+   [E, E, E, E, E, E, E, E],
+   [E, E, E, E, E, E, E, E]],
    is_empty(E),
    is_black(B),
    is_white(W).
@@ -146,9 +148,102 @@ is_same_player(Player, Piece) :-
     is_black(Player), is_black(Piece);
     is_white(Player), is_white(Piece).
 
+no_more_legal_squares(Board) :-
+    is_white(Player), no_more_legal_squares(Player, Board).
+
+no_more_legal_squares(Board) :-
+    is_black(Player), no_more_legal_squares(Player, Board).
+
+no_more_legal_squares(Player, Board) :-
+    \+ (empty_square(X, Y, Board), enclosing_piece(X, Y, Player, Board, _, _, _)).
+
+fill_board(Board) :-
+    Board = [
+    ['o', 'x', 'o', 'x', 'o', 'x', 'o', 'x'],
+    ['x', 'o', 'x', 'o', 'x', 'o', 'x', 'o'],
+    ['o', 'x', 'o', 'x', 'o', 'x', 'o', 'x'],
+    ['x', 'o', 'x', 'x', 'x', 'o', 'x', 'o'],
+    ['o', 'x', 'o', 'x', 'o', 'x', 'o', 'x'],
+    ['x', 'o', 'x', 'o', 'x', 'o', 'x', 'o'],
+    ['o', 'x', 'o', 'x', 'o', 'x', 'o', 'x'],
+    ['x', 'o', 'x', 'o', 'x', 'o', 'x', 'o']].
+
+% Test predicate to run all tests
+test :-
+    test_no_moves_available,
+    test_moves_available,
+    test_enclosing_piece.
+
+% Test case where no moves are available
+test_no_moves_available :-
+    Board = [
+    ['o', 'x', 'o', 'x', 'o', 'x', 'o', 'x'],
+    ['x', 'o', 'x', 'o', 'x', 'o', 'x', 'o'],
+    ['o', 'x', 'o', 'x', 'o', 'x', 'o', 'x'],
+    ['x', 'o', 'x', 'x', 'x', 'o', 'x', 'o'],
+    ['o', 'x', 'o', 'x', 'o', 'x', 'o', 'x'],
+    ['x', 'o', 'x', 'o', 'x', 'o', 'x', 'o'],
+    ['o', 'x', 'o', 'x', 'o', 'x', 'o', 'x'],
+    ['x', 'o', 'x', 'o', 'x', 'o', 'x', 'o']],
+    no_more_legal_squares(Board) ->
+    write('test_no_moves_available: passed'), nl;
+    write('test_no_moves_available: failed'), nl.
+
+% Test case where moves are still available
+test_moves_available :-
+    Board =  [
+    ['.', '.', '.', '.', '.', '.', '.', '.'],
+    ['.', '.', '.', '.', '.', '.', '.', '.'],
+    ['.', '.', '.', '.', '.', '.', '.', '.'],
+    ['.', '.', '.', 'o', 'x', '.', '.', '.'],
+    ['.', '.', '.', 'x', 'o', '.', '.', '.'],
+    ['.', '.', '.', '.', '.', '.', '.', '.'],
+    ['.', '.', '.', '.', '.', '.', '.', '.'],
+    ['.', '.', '.', '.', '.', '.', '.', '.']],
+    \+ no_more_legal_squares(Board) ->
+    write('test_moves_available: passed'), nl;
+    write('test_moves_available: failed'), nl.
+
+test_enclosing_piece :-
+    Board =  [
+    ['.', '.', '.', '.', '.', '.', '.', '.'],
+    ['.', '.', '.', '.', '.', '.', '.', '.'],
+    ['.', '.', '.', '.', 'o', '.', '.', '.'],
+    ['.', '.', 'x', 'x', 'o', '.', '.', '.'],
+    ['.', '.', '.', 'x', 'o', '.', '.', '.'],
+    ['.', '.', '.', '.', 'x', '.', '.', '.'],
+    ['.', '.', '.', '.', '.', '.', '.', '.'],
+    ['.', '.', '.', '.', '.', '.', '.', '.']],
+    enclosing_piece(2, 4, 'o', Board, _, _, _)  ->
+    write('test_enclosing_piece: passed'), nl;
+    write('test_enclosing_piece: failed'), nl.
+
 play :-
     welcome,
     initial_board(Board),
     display_board(Board),
     is_black(Black),
     play(Black, Board).
+
+play(Player, Board) :-
+    no_more_legal_squares(Board),
+    and_the_winner_is(Board, Winner),
+    report_winner(Winner).
+
+play(Player, Board) :-
+    no_more_legal_squares(Board),
+    count_pieces(Board, BlackCount, WhiteCount),
+    BlackCount=WhiteCount,
+    report_stalemate.
+
+play(Player, Board) :-
+    no_more_legal_squares(Player, Board),
+    other_player(Player, OtherPlayer),
+    play(OtherPlayer, Board).
+
+play(Player, Board) :-
+    fill:get_legal_move( Player, X, Y, Board ),
+    fill:fill_and_flip_squares(X, Y, Player, Board, NewBoard ),
+    other_player(Player, OtherPlayer),
+    display_board(NewBoard),
+    play(OtherPlayer, NewBoard).
